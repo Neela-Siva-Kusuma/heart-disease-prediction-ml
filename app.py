@@ -27,12 +27,17 @@ ca = st.selectbox("Number of Major Vessels (0-3)", options=[0, 1, 2, 3])
 thal = st.selectbox("Thal (1 = normal; 2 = fixed defect; 3 = reversable defect)", options=[1, 2, 3])
 
 if st.button("Predict Disease Risk"):
-    features = np.array([[age, sex, cp, trestbps, chol, fbs, restecg, thalach, exang, oldpeak, slope, ca, thal]])
-    imputed_features = imputer.transform(features)
-    scaled_features = scaler.transform(imputed_features)
-    prediction = model.predict(scaled_features)
+    feature_names = ['age', 'sex', 'cp', 'trestbps', 'chol', 'fbs', 'restecg', 'thalach', 'exang', 'oldpeak', 'slope', 'ca', 'thal']
+    input_data = pd.DataFrame([[age, sex, cp, trestbps, chol, fbs, restecg, thalach, exang, oldpeak, slope, ca, thal]], columns=feature_names)
     
-    if prediction[0] == 1:
-        st.error("High Risk of Cardiovascular Disease detected.")
+    imputed_features = imputer.transform(input_data)
+    scaled_features = scaler.transform(imputed_features)
+    
+    # Calculate disease probability
+    disease_prob = model.predict_proba(scaled_features)[0][1]
+    
+    # Clinical risk threshold set to 0.40 to capture high-risk edge cases
+    if disease_prob >= 0.40:
+        st.error(f"High Risk of Cardiovascular Disease detected (Risk Probability: {disease_prob:.1%}).")
     else:
-        st.success("Low Risk of Cardiovascular Disease detected.")
+        st.success(f"Low Risk of Cardiovascular Disease detected (Risk Probability: {disease_prob:.1%}).")
